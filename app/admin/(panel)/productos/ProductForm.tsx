@@ -39,7 +39,22 @@ export default function ProductForm({ categorias, producto }: Props) {
   const [imagenes, setImagenes] = useState<string[]>(producto?.imagenes ?? [])
   const [uploading, setUploading] = useState(false)
   const [cats, setCats] = useState(categorias)
+  const [tallasSeleccionadas, setTallasSeleccionadas] = useState<string[]>(
+    producto?.tallas_disponibles ?? []
+  )
   const fileRef = useRef<HTMLInputElement>(null)
+
+  const TALLAS_ROPA = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+  const TALLAS_ZAPATO = ['24', '25', '26', '27', '28', '29', '30', '31']
+  const TALLAS_UNICO = ['Único']
+
+  const toggleTalla = (t: string) => {
+    const next = tallasSeleccionadas.includes(t)
+      ? tallasSeleccionadas.filter(x => x !== t)
+      : [...tallasSeleccionadas, t]
+    setTallasSeleccionadas(next)
+    setValue('tallas', next.join(', '))
+  }
 
   useEffect(() => {
     if (cats.length === 0) {
@@ -151,7 +166,31 @@ export default function ProductForm({ categorias, producto }: Props) {
         <Input label="Precio comparación" type="number" step="0.01" hint="Precio tachado (opcional)" {...register('precio_comparacion')} />
         <Select label="Categoría" options={cats.map((c) => ({ value: c.id, label: c.nombre }))} placeholder="Selecciona..." error={errors.categoria_id?.message} {...register('categoria_id')} />
         <Input label="Stock" type="number" error={errors.stock?.message} {...register('stock')} />
-        <Input label="Tallas" hint="Ej: XS, S, M, L, XL (separadas por coma)" {...register('tallas')} className="sm:col-span-2" />
+        <div className="sm:col-span-2">
+          <p className="text-sm text-vx-gray300 font-medium mb-2">Tallas</p>
+          <input type="hidden" {...register('tallas')} />
+          <div className="flex flex-col gap-2">
+            {[['Ropa', TALLAS_ROPA], ['Zapato', TALLAS_ZAPATO], ['', TALLAS_UNICO]].map(([grupo, lista]) => (
+              <div key={String(grupo)} className="flex flex-wrap gap-2 items-center">
+                {grupo && <span className="text-xs text-vx-gray500 w-12">{grupo}</span>}
+                {(lista as string[]).map(t => (
+                  <button
+                    key={t} type="button"
+                    onClick={() => toggleTalla(t)}
+                    className={`px-3 py-1 rounded-md text-xs font-bold border transition-colors ${
+                      tallasSeleccionadas.includes(t)
+                        ? 'bg-vx-white text-vx-black border-vx-white'
+                        : 'bg-transparent text-vx-gray400 border-vx-gray700 hover:border-vx-gray400'
+                    }`}
+                  >{t}</button>
+                ))}
+              </div>
+            ))}
+          </div>
+          {tallasSeleccionadas.length > 0 && (
+            <p className="text-xs text-vx-gray500 mt-2">Seleccionadas: {tallasSeleccionadas.join(', ')}</p>
+          )}
+        </div>
       </div>
 
       {/* Imágenes */}
