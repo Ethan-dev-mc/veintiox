@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -38,7 +38,14 @@ export default function ProductForm({ categorias, producto }: Props) {
   const [aiLoading, setAiLoading] = useState(false)
   const [imagenes, setImagenes] = useState<string[]>(producto?.imagenes ?? [])
   const [uploading, setUploading] = useState(false)
+  const [cats, setCats] = useState(categorias)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (cats.length === 0) {
+      fetch('/api/admin/categorias').then(r => r.json()).then(d => { if (d.categorias) setCats(d.categorias) })
+    }
+  }, [])
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -142,7 +149,7 @@ export default function ProductForm({ categorias, producto }: Props) {
         </div>
         <Input label="Precio (MXN)" type="number" step="0.01" error={errors.precio?.message} {...register('precio')} />
         <Input label="Precio comparación" type="number" step="0.01" hint="Precio tachado (opcional)" {...register('precio_comparacion')} />
-        <Select label="Categoría" options={categorias.map((c) => ({ value: c.id, label: c.nombre }))} placeholder="Selecciona..." error={errors.categoria_id?.message} {...register('categoria_id')} />
+        <Select label="Categoría" options={cats.map((c) => ({ value: c.id, label: c.nombre }))} placeholder="Selecciona..." error={errors.categoria_id?.message} {...register('categoria_id')} />
         <Input label="Stock" type="number" error={errors.stock?.message} {...register('stock')} />
         <Input label="Tallas" hint="Ej: XS, S, M, L, XL (separadas por coma)" {...register('tallas')} className="sm:col-span-2" />
       </div>
