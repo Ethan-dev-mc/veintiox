@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { supabase } from '@/lib/supabase'
 import Input from '@/components/atoms/Input'
 import Select from '@/components/atoms/Select'
 import Textarea from '@/components/atoms/Textarea'
@@ -85,15 +84,14 @@ export default function ProductForm({ categorias, producto }: Props) {
     const files = e.target.files
     if (!files?.length) return
     setUploading(true)
-    const sb = supabase as any
     const urls: string[] = []
     for (const file of Array.from(files)) {
-      const ext = file.name.split('.').pop()
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      const { error } = await sb.storage.from('productos').upload(path, file, { upsert: true })
-      if (!error) {
-        const { data } = sb.storage.from('productos').getPublicUrl(path)
-        urls.push(data.publicUrl)
+      const form = new FormData()
+      form.append('file', file)
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: form })
+      if (res.ok) {
+        const { url } = await res.json()
+        urls.push(url)
       }
     }
     setImagenes((prev) => [...prev, ...urls])
@@ -118,12 +116,14 @@ export default function ProductForm({ categorias, producto }: Props) {
       activo:             data.activo ?? true,
       imagenes,
     }
-    const sb = supabase as any
-    const { error } = producto
-      ? await sb.from('productos').update(payload).eq('id', producto.id)
-      : await sb.from('productos').insert(payload)
-    if (error) {
-      alert('Error al guardar: ' + error.message)
+    const res = await fetch('/api/admin/productos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(producto ? { id: producto.id, ...payload } : payload),
+    })
+    const result = await res.json()
+    if (!res.ok) {
+      alert('Error al guardar: ' + result.error)
       setSaving(false)
       return
     }
