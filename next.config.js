@@ -23,6 +23,10 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'm.media-amazon.com',
+      },
+      {
+        protocol: 'https',
         hostname: 'ss701.liverpool.com.mx',
       },
       {
