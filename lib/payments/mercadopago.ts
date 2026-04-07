@@ -1,5 +1,5 @@
 export async function createMercadoPagoPreference(pedidoId: string, total: number) {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'https://veintiox.store'
 
   const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
     method: 'POST',
