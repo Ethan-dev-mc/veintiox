@@ -12,8 +12,8 @@ export default function CheckoutPageClient() {
   const router = useRouter()
   const { items, subtotal, clearCart } = useCartStore()
   const [loading, setLoading] = useState(false)
-  const [costoEnvio, setCostoEnvio] = useState(150)
-  const [minimoGratis, setMinimoGratis] = useState(999)
+  const [costoEnvio, setCostoEnvio] = useState<number | null>(null)
+  const [minimoGratis, setMinimoGratis] = useState<number | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/configuracion')
@@ -22,14 +22,16 @@ export default function CheckoutPageClient() {
         if (!data) return
         const costo = data.find((d: any) => d.clave === 'costo_envio')
         const minimo = data.find((d: any) => d.clave === 'envio_gratis_minimo')
-        if (costo) setCostoEnvio(Number(costo.valor))
-        if (minimo) setMinimoGratis(Number(minimo.valor))
+        setCostoEnvio(costo ? Number(costo.valor) : 150)
+        setMinimoGratis(minimo ? Number(minimo.valor) : 999)
       })
+      .catch(() => { setCostoEnvio(150); setMinimoGratis(999) })
   }, [])
 
   const sub = subtotal()
-  const envio = sub >= minimoGratis ? 0 : costoEnvio
-  const total = sub + envio
+  const configLoaded = costoEnvio !== null && minimoGratis !== null
+  const envio = configLoaded ? (sub >= minimoGratis! ? 0 : costoEnvio!) : null
+  const total = configLoaded ? sub + envio! : null
 
   if (items.length === 0) {
     return (
@@ -46,7 +48,7 @@ export default function CheckoutPageClient() {
       const res = await fetch('/api/pedidos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, items, subtotal: sub, envio, total }),
+        body: JSON.stringify({ ...data, items, subtotal: sub, envio: envio!, total: total! }),
       })
       if (!res.ok) throw new Error()
       const { numeroPedido, checkoutUrl } = await res.json()
@@ -63,14 +65,18 @@ export default function CheckoutPageClient() {
   return (
     <div className="container-site py-10">
       <Heading size="sm" className="mb-8">CHECKOUT</Heading>
-      <CheckoutForm
-        items={items}
-        subtotal={sub}
-        envio={envio}
-        total={total}
-        onSubmit={onSubmit}
-        loading={loading}
-      />
+      {!configLoaded ? (
+        <p className="text-white/50 text-sm">Calculando envío...</p>
+      ) : (
+        <CheckoutForm
+          items={items}
+          subtotal={sub}
+          envio={envio!}
+          total={total!}
+          onSubmit={onSubmit}
+          loading={loading}
+        />
+      )}
     </div>
   )
 }
