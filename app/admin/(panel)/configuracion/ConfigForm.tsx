@@ -11,6 +11,7 @@ export default function ConfigForm() {
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     fetch('/api/admin/configuracion')
@@ -29,14 +30,25 @@ export default function ConfigForm() {
 
   const save = async () => {
     setSaving(true)
-    await fetch('/api/admin/configuracion', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    })
-    setSaved(true)
-    setSaving(false)
-    setTimeout(() => setSaved(false), 2000)
+    setError('')
+    try {
+      const res = await fetch('/api/admin/configuracion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setError(json.error ?? 'Error al guardar')
+      } else {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 2000)
+      }
+    } catch (e) {
+      setError('Error de red')
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (loading) return <p className="text-white/50 text-sm">Cargando...</p>
@@ -53,6 +65,7 @@ export default function ConfigForm() {
       <Button onClick={save} loading={saving}>
         {saved ? <><IconCheck className="w-4 h-4" /> Guardado</> : 'Guardar cambios'}
       </Button>
+      {error && <p className="text-red-400 text-sm">{error}</p>}
     </div>
   )
 }
