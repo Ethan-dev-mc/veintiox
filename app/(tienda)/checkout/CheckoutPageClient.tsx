@@ -50,13 +50,14 @@ export default function CheckoutPageClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...data, items, subtotal: sub, envio: envio!, total: total! }),
       })
-      if (!res.ok) throw new Error()
-      const { numeroPedido, checkoutUrl } = await res.json()
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Error')
+      const { checkoutUrl } = json
+      if (!checkoutUrl) throw new Error('No se pudo generar el link de pago')
       clearCart()
-      if (checkoutUrl) window.location.href = checkoutUrl
-      else router.push(`/checkout/confirmacion?pedido=${numeroPedido}`)
-    } catch {
-      alert('Error al procesar el pedido. Intenta de nuevo.')
+      window.location.href = checkoutUrl
+    } catch (e: any) {
+      alert(e.message ?? 'Error al procesar el pedido. Intenta de nuevo.')
     } finally {
       setLoading(false)
     }
