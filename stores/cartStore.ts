@@ -17,8 +17,8 @@ interface CartState {
   // Computed
   totalItems: () => number
   subtotal: () => number
-  envio: (minimo?: number) => number
-  total: (minimo?: number) => number
+  envio: (minimo?: number, costo?: number) => number
+  total: (minimo?: number, costo?: number) => number
 }
 
 function generateId() {
@@ -72,12 +72,12 @@ export const useCartStore = create<CartState>()(
 
       subtotal: () => get().items.reduce((acc, i) => acc + i.precio * i.cantidad, 0),
 
-      envio: (minimo = 999) => {
+      envio: (minimo = 999, costo = 150) => {
         const sub = get().subtotal()
-        return sub >= minimo ? 0 : 150
+        return sub >= minimo ? 0 : costo
       },
 
-      total: (minimo = 999) => get().subtotal() + get().envio(minimo),
+      total: (minimo = 999, costo = 150) => get().subtotal() + get().envio(minimo, costo),
     }),
     {
       name: 'veintiox-cart',

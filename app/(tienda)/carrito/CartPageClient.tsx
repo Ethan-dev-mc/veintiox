@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useCartStore } from '@/stores/cartStore'
 import CartItem from '@/components/molecules/CartItem'
@@ -10,10 +11,26 @@ import { IconTruck, IconArrowRight } from '@/components/atoms/Icon'
 
 export default function CartPageClient() {
   const { items, updateQuantity, removeItem, subtotal, envio, total } = useCartStore()
+  const [minimoGratis, setMinimoGratis] = useState(999)
+  const [costoEnvio, setCostoEnvio] = useState(150)
+
+  useEffect(() => {
+    fetch('/api/admin/configuracion')
+      .then(r => r.json())
+      .then(({ data }) => {
+        if (!data) return
+        const minimo = data.find((d: any) => d.clave === 'envio_gratis_minimo')
+        const costo = data.find((d: any) => d.clave === 'costo_envio')
+        if (minimo) setMinimoGratis(Number(minimo.valor))
+        if (costo) setCostoEnvio(Number(costo.valor))
+      })
+      .catch(() => {})
+  }, [])
+
   const sub = subtotal()
-  const env = envio()
-  const tot = total()
-  const falta = Math.max(0, 999 - sub)
+  const env = envio(minimoGratis, costoEnvio)
+  const tot = total(minimoGratis, costoEnvio)
+  const falta = Math.max(0, minimoGratis - sub)
 
   if (items.length === 0) {
     return (
