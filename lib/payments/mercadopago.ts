@@ -10,7 +10,6 @@ export async function createMercadoPagoPreference(pedidoId: string, total: numbe
     body: JSON.stringify({
       items: [{ title: 'Pedido Veintiox', quantity: 1, unit_price: Number(total), currency_id: 'MXN' }],
       external_reference: pedidoId,
-      notification_url: `${SITE_URL}/api/webhooks/mercadopago`,
     }),
   })
 
