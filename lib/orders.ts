@@ -14,6 +14,8 @@ interface CreateOrderParams extends CheckoutFormData {
   subtotal: number
   envio: number
   total: number
+  cupon_id?: string
+  descuento?: number
 }
 
 export async function createOrder(params: CreateOrderParams) {
@@ -33,9 +35,11 @@ export async function createOrder(params: CreateOrderParams) {
       direccion_cp:     params.cp,
       subtotal:         params.subtotal,
       envio:            params.envio,
+      descuento:        params.descuento ?? 0,
       total:            params.total,
       metodo_pago:      params.metodo_pago,
       estado:           'pendiente',
+      cupon_id:         params.cupon_id ?? null,
     })
     .select('id, numero_pedido')
     .single()

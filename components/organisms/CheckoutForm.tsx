@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -36,12 +37,20 @@ const METODOS_PAGO = [
   { value: 'mercadopago',  label: 'MercadoPago (tarjeta, OXXO, transferencia)' },
 ]
 
+interface CuponAplicado {
+  id: string
+  codigo: string
+  tipo: string
+  valor: number
+  descuento: number
+}
+
 interface CheckoutFormProps {
   items: CartItemData[]
   subtotal: number
   envio: number
   total: number
-  onSubmit: (data: CheckoutFormData) => Promise<void>
+  onSubmit: (data: CheckoutFormData, cuponId?: string, descuento?: number) => Promise<void>
   loading?: boolean
 }
 
@@ -51,8 +60,37 @@ export default function CheckoutForm({ items, subtotal, envio, total, onSubmit, 
     defaultValues: { metodo_pago: 'mercadopago' },
   })
 
+  const [codigoCupon, setCodigoCupon] = useState('')
+  const [cupon, setCupon] = useState<CuponAplicado | null>(null)
+  const [cuponError, setCuponError] = useState('')
+  const [validandoCupon, setValidandoCupon] = useState(false)
+
+  const totalConDescuento = cupon ? Math.max(0, total - cupon.descuento) : total
+
+  const aplicarCupon = async () => {
+    if (!codigoCupon.trim()) return
+    setValidandoCupon(true)
+    setCuponError('')
+    try {
+      const res = await fetch('/api/cupones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigo: codigoCupon, subtotal }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setCuponError(data.error ?? 'Cupón inválido'); return }
+      setCupon(data.cupon)
+    } catch {
+      setCuponError('Error al validar el cupón')
+    } finally {
+      setValidandoCupon(false)
+    }
+  }
+
+  const quitarCupon = () => { setCupon(null); setCodigoCupon(''); setCuponError('') }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
+    <form onSubmit={handleSubmit((data) => onSubmit(data, cupon?.id, cupon?.descuento))} className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
       {/* Formulario */}
       <div className="lg:col-span-3 flex flex-col gap-8">
         {/* Datos personales */}
@@ -76,6 +114,38 @@ export default function CheckoutForm({ items, subtotal, envio, total, onSubmit, 
           </div>
         </section>
 
+        {/* Cupón */}
+        <section>
+          <Label className="mb-4 block">Cupón de descuento</Label>
+          {cupon ? (
+            <div className="flex items-center justify-between bg-vx-gray800 rounded-lg px-4 py-3">
+              <div>
+                <span className="text-sm text-vx-cyan font-mono font-bold">{cupon.codigo}</span>
+                <span className="text-xs text-vx-gray400 ml-2">
+                  {cupon.tipo === 'porcentaje' ? `${cupon.valor}% de descuento` : `$${cupon.valor} de descuento`}
+                  {' — '}<span className="text-green-400">-${cupon.descuento.toFixed(2)}</span>
+                </span>
+              </div>
+              <button type="button" onClick={quitarCupon} className="text-xs text-vx-gray500 hover:text-red-400 transition-colors">Quitar</button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={codigoCupon}
+                onChange={e => { setCodigoCupon(e.target.value.toUpperCase()); setCuponError('') }}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); aplicarCupon() } }}
+                placeholder="CODIGO20"
+                className="flex-1 bg-vx-gray900 border border-vx-gray700 rounded-lg px-3 py-2.5 text-sm text-vx-white placeholder:text-vx-gray500 focus:outline-none focus:border-vx-cyan transition-colors font-mono"
+              />
+              <Button type="button" size="sm" onClick={aplicarCupon} loading={validandoCupon} disabled={!codigoCupon.trim()}>
+                Aplicar
+              </Button>
+            </div>
+          )}
+          {cuponError && <p className="text-xs text-red-400 mt-1">{cuponError}</p>}
+        </section>
+
         {/* Método de pago */}
         <section>
           <Label className="mb-4 block">Método de pago</Label>
@@ -83,7 +153,7 @@ export default function CheckoutForm({ items, subtotal, envio, total, onSubmit, 
         </section>
 
         <Button type="submit" size="lg" fullWidth loading={loading}>
-          Confirmar pedido — ${total.toFixed(2)} MXN
+          Confirmar pedido — ${totalConDescuento.toFixed(2)} MXN
         </Button>
       </div>
 
@@ -112,9 +182,15 @@ export default function CheckoutForm({ items, subtotal, envio, total, onSubmit, 
               <span>Envío</span>
               <span>{envio === 0 ? <span className="text-vx-cyan">Gratis</span> : `$${envio}`}</span>
             </div>
+            {cupon && (
+              <div className="flex justify-between text-green-400">
+                <span>Descuento ({cupon.codigo})</span>
+                <span>-${cupon.descuento.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-vx-white text-base pt-2 border-t border-vx-gray800">
               <span>Total</span>
-              <Price amount={total} size="md" />
+              <Price amount={totalConDescuento} size="md" />
             </div>
           </div>
         </div>

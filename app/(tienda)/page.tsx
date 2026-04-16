@@ -19,7 +19,7 @@ export const revalidate = 60
 export default async function HomePage() {
   const supabase = createSupabaseServerClient()
 
-  const [{ data: destacadosRaw }, { data: todosRaw }, { data: kits }, { data: dropRaw }] = await Promise.all([
+  const [{ data: destacadosRaw }, { data: todosRaw }, { data: masVendidosRaw }, { data: kits }, { data: dropRaw }] = await Promise.all([
     supabase
       .from('productos')
       .select('*')
@@ -32,6 +32,13 @@ export default async function HomePage() {
       .select('*')
       .eq('activo', true)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('productos')
+      .select('*')
+      .eq('activo', true)
+      .gt('ventas_count', 0)
+      .order('ventas_count', { ascending: false })
+      .limit(8),
     supabase
       .from('kits')
       .select('*, kit_items(count)')
@@ -49,6 +56,7 @@ export default async function HomePage() {
 
   const destacados = destacadosRaw as Producto[] | null
   const todos = todosRaw as Producto[] | null
+  const masVendidos = masVendidosRaw as Producto[] | null
   const dropData = dropRaw as (Drop & { drop_productos: any[] }) | null
 
   const kitsConCount = (kits ?? []).map((k: any) => ({
@@ -76,6 +84,19 @@ export default async function HomePage() {
   return (
     <>
       <HeroBanner />
+
+      {/* Más vendidos */}
+      {(masVendidos ?? []).length > 0 && (
+        <section className="container-site py-16 border-t border-vx-gray800">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <Label>Lo más popular</Label>
+              <Heading size="md" className="mt-1">MÁS VENDIDOS</Heading>
+            </div>
+          </div>
+          <ProductGrid products={masVendidos ?? []} showFilters={false} />
+        </section>
+      )}
 
       {/* Todos los productos */}
       {(todos ?? []).length > 0 && (

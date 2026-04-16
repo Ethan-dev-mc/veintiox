@@ -42,13 +42,14 @@ export default function CheckoutPageClient() {
     )
   }
 
-  const onSubmit = async (data: CheckoutFormData) => {
+  const onSubmit = async (data: CheckoutFormData, cuponId?: string, descuento?: number) => {
     setLoading(true)
+    const totalFinal = descuento ? Math.max(0, total! - descuento) : total!
     try {
       const res = await fetch('/api/pedidos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, items, subtotal: sub, envio: envio!, total: total! }),
+        body: JSON.stringify({ ...data, items, subtotal: sub, envio: envio!, total: totalFinal, cupon_id: cuponId, descuento: descuento ?? 0 }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Error')
