@@ -1,13 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
 import Input from '@/components/atoms/Input'
 import Button from '@/components/atoms/Button'
 
 export default function AdminLoginPage() {
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -18,19 +15,21 @@ export default function AdminLoginPage() {
     setLoading(true)
     setError('')
 
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const res = await fetch('/api/admin/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ email, password }),
+    })
 
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
-    if (authError) {
-      setError('Credenciales incorrectas. Verifica tu email y contraseña.')
+    if (!res.ok) {
+      const json = await res.json()
+      setError(json.error ?? 'Credenciales incorrectas')
       setLoading(false)
       return
     }
-    router.refresh()
-    router.push('/admin/dashboard')
+
+    window.location.href = '/admin/dashboard'
   }
 
   return (
