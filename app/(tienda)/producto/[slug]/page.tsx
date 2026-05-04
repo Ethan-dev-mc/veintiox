@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase-server'
 import ProductDetailClient from './ProductDetailClient'
 import type { Producto } from '@/types/database'
 
@@ -51,5 +51,14 @@ export default async function ProductoPage({ params }: Props) {
 
   const relacionados = (relacionadosRaw ?? []) as Producto[]
 
-  return <ProductDetailClient producto={producto} relacionados={relacionados} />
+  const adminClient = createSupabaseAdminClient()
+  const { data: configRaw } = await adminClient
+    .from('configuracion')
+    .select('valor')
+    .eq('clave', 'envio_gratis_minimo')
+    .single()
+
+  const envioGratisMinimo = configRaw ? parseFloat((configRaw as any).valor) || 999 : 999
+
+  return <ProductDetailClient producto={producto} relacionados={relacionados} envioGratisMinimo={envioGratisMinimo} />
 }

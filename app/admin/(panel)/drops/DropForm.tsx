@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import Input from '@/components/atoms/Input'
 import Textarea from '@/components/atoms/Textarea'
 import Button from '@/components/atoms/Button'
@@ -13,6 +12,7 @@ interface Props { drop?: Drop }
 export default function DropForm({ drop }: Props) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
   const [form, setForm] = useState({
     nombre:      drop?.nombre ?? '',
     descripcion: drop?.descripcion ?? '',
@@ -25,19 +25,31 @@ export default function DropForm({ drop }: Props) {
 
   const save = async () => {
     setSaving(true)
-    const payload = {
+    setError('')
+    const payload: Record<string, unknown> = {
       nombre:      form.nombre,
       descripcion: form.descripcion,
       fecha_inicio: new Date(form.fecha_inicio).toISOString(),
       fecha_fin:   form.fecha_fin ? new Date(form.fecha_fin).toISOString() : null,
       activo:      form.activo,
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sb = supabase as any
-    if (drop) await sb.from('drops').update(payload).eq('id', drop.id)
-    else await sb.from('drops').insert(payload)
-    router.push('/admin/drops')
-    router.refresh()
+    if (drop) payload.id = drop.id
+    try {
+      const res = await fetch('/api/admin/drops', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload),
+      })
+      const json = await res.json()
+      if (!res.ok) { setError(json.error ?? 'Error al guardar'); return }
+      router.push('/admin/drops')
+      router.refresh()
+    } catch {
+      setError('Error de red')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -50,6 +62,7 @@ export default function DropForm({ drop }: Props) {
         <input type="checkbox" checked={form.activo} onChange={(e) => set('activo', e.target.checked)} className="accent-vx-cyan" />
         Activo
       </label>
+      {error && <p className="text-red-400 text-sm">{error}</p>}
       <div className="flex gap-3">
         <Button onClick={save} loading={saving}>{drop ? 'Guardar' : 'Crear drop'}</Button>
         <Button variant="outline" onClick={() => router.back()}>Cancelar</Button>

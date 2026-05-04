@@ -1,8 +1,9 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { IconTruck } from '@/components/atoms/Icon'
 
-const items = [
+const DEFAULT_ITEMS = [
   'BIENVENIDO A VEINTIOX',
   'ENVÍO GRATIS EN COMPRAS MAYORES A $999',
   'DROPS LIMITADOS CADA SEMANA',
@@ -10,6 +11,25 @@ const items = [
 ]
 
 export default function PromoBar() {
+  const [items, setItems] = useState(DEFAULT_ITEMS)
+
+  useEffect(() => {
+    fetch('/api/config')
+      .then(r => r.json())
+      .then(({ data }) => {
+        if (!data) return
+        const updated = [...DEFAULT_ITEMS]
+        if (data.envio_gratis_minimo) {
+          updated[1] = `ENVÍO GRATIS EN COMPRAS MAYORES A $${data.envio_gratis_minimo}`
+        }
+        if (data.promo_bar_texto) {
+          updated[0] = data.promo_bar_texto.toUpperCase()
+        }
+        setItems(updated)
+      })
+      .catch(() => {})
+  }, [])
+
   const repeated = [...items, ...items]
 
   return (

@@ -10,9 +10,10 @@ import type { Producto, Categoria } from '@/types/database'
 interface Props {
   producto: Producto & { categorias?: Categoria }
   relacionados: Producto[]
+  envioGratisMinimo?: number
 }
 
-export default function ProductDetailClient({ producto, relacionados }: Props) {
+export default function ProductDetailClient({ producto, relacionados, envioGratisMinimo = 999 }: Props) {
   const addItem = useCartStore((s) => s.addItem)
   const openCart = useCartStore((s) => s.openCart)
   const { toast } = useToast()
@@ -21,6 +22,7 @@ export default function ProductDetailClient({ producto, relacionados }: Props) {
     <div className="container-site py-10">
       <ProductDetail
         product={producto}
+        envioGratisMinimo={envioGratisMinimo}
         onAddToCart={({ id, talla, cantidad }) => {
           addItem({
             productoId: id,

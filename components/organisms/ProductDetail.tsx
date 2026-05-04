@@ -16,9 +16,10 @@ import type { Producto, Categoria } from '@/types/database'
 interface ProductDetailProps {
   product: Producto & { categorias?: Categoria }
   onAddToCart: (item: { id: string; talla?: string; cantidad: number }) => void
+  envioGratisMinimo?: number
 }
 
-export default function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
+export default function ProductDetail({ product, onAddToCart, envioGratisMinimo = 999 }: ProductDetailProps) {
   const [selectedTalla, setSelectedTalla] = useState<string | null>(
     product.tallas_disponibles.length === 1 ? product.tallas_disponibles[0] : null
   )
@@ -61,11 +62,17 @@ export default function ProductDetail({ product, onAddToCart }: ProductDetailPro
         {/* Título y precio */}
         <div>
           <Heading size="sm" className="mb-3">{product.nombre}</Heading>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Price amount={product.precio} compare={product.precio_comparacion ?? undefined} size="lg" />
             {agotado && <Badge variant="danger">Agotado</Badge>}
             {!agotado && product.stock <= 5 && (
               <Badge variant="warning">Solo {product.stock} disponibles</Badge>
+            )}
+            {!agotado && product.precio >= envioGratisMinimo && (
+              <span className="inline-flex items-center gap-1 bg-green-500/20 text-green-400 border border-green-500/30 rounded-full px-2.5 py-0.5 text-xs font-bold">
+                <IconTruck className="w-3 h-3" />
+                ENVÍO GRATIS
+              </span>
             )}
           </div>
         </div>
@@ -109,7 +116,7 @@ export default function ProductDetail({ product, onAddToCart }: ProductDetailPro
         <div className="flex flex-col gap-2 pt-2 border-t border-vx-gray800">
           <div className="flex items-center gap-2 text-xs text-vx-gray400">
             <IconTruck className="w-4 h-4 text-vx-cyan flex-shrink-0" />
-            Envío gratis en compras mayores a $999 MXN
+            Envío gratis en compras mayores a ${envioGratisMinimo} MXN
           </div>
           <div className="flex items-center gap-2 text-xs text-vx-gray400">
             <IconZap className="w-4 h-4 text-vx-cyan flex-shrink-0" />
