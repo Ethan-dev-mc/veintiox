@@ -8,6 +8,7 @@ import AdminHeader from '@/components/admin/AdminHeader'
 import Badge from '@/components/atoms/Badge'
 import EstadoPedidoForm from './EstadoPedidoForm'
 import CJSection from './CJSection'
+import SkydropxSection from './SkydropxSection'
 
 interface Props { params: { id: string } }
 
@@ -70,6 +71,17 @@ export default async function DetallePedidoPage({ params }: Props) {
               cantidad: i.cantidad,
               subtotal: i.subtotal,
             }))}
+          />
+        </div>
+      )}
+
+      {['pagado', 'pendiente_envio', 'enviado'].includes(pedido.estado) && (
+        <div className="mb-4">
+          <SkydropxSection
+            pedidoId={pedido.id}
+            initialTracking={pedido.numero_rastreo}
+            initialEtiqueta={pedido.etiqueta_url}
+            initialCarrier={pedido.carrier_envio}
           />
         </div>
       )}
