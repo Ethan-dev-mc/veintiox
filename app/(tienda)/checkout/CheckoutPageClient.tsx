@@ -17,14 +17,11 @@ export default function CheckoutPageClient() {
   const [minimoGratis, setMinimoGratis] = useState<number | null>(null)
 
   useEffect(() => {
-    fetch('/api/admin/configuracion')
+    fetch('/api/config')
       .then(r => r.json())
       .then(({ data }) => {
-        if (!data) return
-        const costo = data.find((d: any) => d.clave === 'costo_envio')
-        const minimo = data.find((d: any) => d.clave === 'envio_gratis_minimo')
-        setCostoEnvio(costo ? Number(costo.valor) : 150)
-        setMinimoGratis(minimo ? Number(minimo.valor) : 999)
+        setCostoEnvio(data?.costo_envio ? Number(data.costo_envio) : 150)
+        setMinimoGratis(data?.envio_gratis_minimo ? Number(data.envio_gratis_minimo) : 999)
       })
       .catch(() => { setCostoEnvio(150); setMinimoGratis(999) })
   }, [])
