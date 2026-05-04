@@ -7,13 +7,16 @@ import CartDrawer from './CartDrawer'
 export default function CartProvider({ children }: { children: React.ReactNode }) {
   const { items, open, closeCart, updateQuantity, removeItem } = useCartStore()
   const [envioGratisMinimo, setEnvioGratisMinimo] = useState(999)
+  const [costoEnvio, setCostoEnvio] = useState(150)
 
   useEffect(() => {
     fetch('/api/config')
       .then(r => r.json())
       .then(({ data }) => {
-        const val = parseFloat(data?.envio_gratis_minimo)
-        if (!isNaN(val)) setEnvioGratisMinimo(val)
+        const minimo = parseFloat(data?.envio_gratis_minimo)
+        const costo = parseFloat(data?.costo_envio)
+        if (!isNaN(minimo)) setEnvioGratisMinimo(minimo)
+        if (!isNaN(costo)) setCostoEnvio(costo)
       })
       .catch(() => {})
   }, [])
@@ -28,6 +31,7 @@ export default function CartProvider({ children }: { children: React.ReactNode }
         onQuantityChange={updateQuantity}
         onRemove={removeItem}
         envioGratisMinimo={envioGratisMinimo}
+        costoEnvio={costoEnvio}
       />
     </>
   )

@@ -15,6 +15,7 @@ interface CartDrawerProps {
   onQuantityChange: (id: string, cantidad: number) => void
   onRemove: (id: string) => void
   envioGratisMinimo?: number
+  costoEnvio?: number
 }
 
 export default function CartDrawer({
@@ -24,9 +25,10 @@ export default function CartDrawer({
   onQuantityChange,
   onRemove,
   envioGratisMinimo = 999,
+  costoEnvio = 150,
 }: CartDrawerProps) {
   const subtotal = items.reduce((acc, item) => acc + item.precio * item.cantidad, 0)
-  const envio = subtotal >= envioGratisMinimo ? 0 : 150
+  const envio = subtotal >= envioGratisMinimo ? 0 : costoEnvio
   const total = subtotal + envio
   const faltaEnvioGratis = Math.max(0, envioGratisMinimo - subtotal)
 
