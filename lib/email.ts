@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 
 const FROM = process.env.RESEND_FROM_EMAIL ?? 'noreply@veintiox.com'
-const ADMIN_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'hola@veintiox.com'
+const ADMIN_EMAIL = process.env.RESEND_ADMIN_EMAIL ?? 'ethan.studiogdl@gmail.com'
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY ?? 'placeholder')

@@ -12,6 +12,7 @@ export default function CheckoutPageClient() {
   const router = useRouter()
   const { items, subtotal, clearCart } = useCartStore()
   const [loading, setLoading] = useState(false)
+  const [checkoutError, setCheckoutError] = useState('')
   const [costoEnvio, setCostoEnvio] = useState<number | null>(null)
   const [minimoGratis, setMinimoGratis] = useState<number | null>(null)
 
@@ -44,6 +45,7 @@ export default function CheckoutPageClient() {
 
   const onSubmit = async (data: CheckoutFormData, cuponId?: string, descuento?: number) => {
     setLoading(true)
+    setCheckoutError('')
     const totalFinal = descuento ? Math.max(0, total! - descuento) : total!
     try {
       const res = await fetch('/api/pedidos', {
@@ -58,7 +60,7 @@ export default function CheckoutPageClient() {
       clearCart()
       window.location.href = checkoutUrl
     } catch (e: any) {
-      alert(e.message ?? 'Error al procesar el pedido. Intenta de nuevo.')
+      setCheckoutError(e.message ?? 'Error al procesar el pedido. Intenta de nuevo.')
     } finally {
       setLoading(false)
     }
@@ -70,14 +72,21 @@ export default function CheckoutPageClient() {
       {!configLoaded ? (
         <p className="text-white/50 text-sm">Calculando envío...</p>
       ) : (
-        <CheckoutForm
-          items={items}
-          subtotal={sub}
-          envio={envio!}
-          total={total!}
-          onSubmit={onSubmit}
-          loading={loading}
-        />
+        <>
+          {checkoutError && (
+            <div className="mb-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+              {checkoutError}
+            </div>
+          )}
+          <CheckoutForm
+            items={items}
+            subtotal={sub}
+            envio={envio!}
+            total={total!}
+            onSubmit={onSubmit}
+            loading={loading}
+          />
+        </>
       )}
     </div>
   )
