@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import Input from '@/components/atoms/Input'
 import Button from '@/components/atoms/Button'
 
 export default function AdminLoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -27,7 +29,8 @@ export default function AdminLoginPage() {
       setLoading(false)
       return
     }
-    window.location.href = '/admin/dashboard'
+    router.refresh()
+    router.push('/admin/dashboard')
   }
 
   return (
