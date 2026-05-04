@@ -12,24 +12,40 @@ export default function AdminLoginPage() {
 
   const handleLogin = async () => {
     if (!email || !password) { setError('Ingresa email y contraseña'); return }
-    setLoading(true)
-    setError('')
-    setStatus('Conectando...')
+    setLoading(true); setError(''); setStatus('Autenticando...')
+
     try {
       const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
-      setStatus('Autenticando...')
+
       const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
-      if (authError) { setError('Error: ' + authError.message); setStatus(''); setLoading(false); return }
-      if (!data.session) { setError('Sin sesión. Reintenta.'); setStatus(''); setLoading(false); return }
+      if (authError || !data.session) {
+        setError(authError?.message ?? 'Error de autenticación')
+        setLoading(false); setStatus(''); return
+      }
+
+      setStatus('Iniciando sesión...')
+      const res = await fetch('/api/admin/auth/set-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        }),
+      })
+
+      if (!res.ok) {
+        setError('Error al guardar sesión'); setLoading(false); setStatus(''); return
+      }
+
       setStatus('Redirigiendo...')
       window.location.href = '/admin/dashboard'
     } catch (e: any) {
-      setError('Excepción: ' + (e?.message ?? String(e)))
-      setStatus('')
-      setLoading(false)
+      setError('Error: ' + (e?.message ?? String(e)))
+      setLoading(false); setStatus('')
     }
   }
 
@@ -44,35 +60,19 @@ export default function AdminLoginPage() {
           <div style={{ color: '#fff', fontSize: '18px', fontWeight: 'bold' }}>INICIAR SESIÓN</div>
           <div>
             <label style={{ color: '#aaa', fontSize: '13px', display: 'block', marginBottom: '6px' }}>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@veintiox.store"
-              autoComplete="email"
-              style={{ width: '100%', background: '#111', border: '1px solid #333', borderRadius: '8px', padding: '12px 16px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
-            />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@veintiox.store" autoComplete="email"
+              style={{ width: '100%', background: '#111', border: '1px solid #333', borderRadius: '8px', padding: '12px 16px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }} />
           </div>
           <div>
             <label style={{ color: '#aaa', fontSize: '13px', display: 'block', marginBottom: '6px' }}>Contraseña</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              autoComplete="current-password"
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete="current-password"
               onKeyDown={(e) => { if (e.key === 'Enter') handleLogin() }}
-              style={{ width: '100%', background: '#111', border: '1px solid #333', borderRadius: '8px', padding: '12px 16px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
-            />
+              style={{ width: '100%', background: '#111', border: '1px solid #333', borderRadius: '8px', padding: '12px 16px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }} />
           </div>
-          {error && <div style={{ color: '#f87171', fontSize: '13px', wordBreak: 'break-all' }}>{error}</div>}
+          {error && <div style={{ color: '#f87171', fontSize: '13px' }}>{error}</div>}
           {status && !error && <div style={{ color: '#22d3ee', fontSize: '13px' }}>{status}</div>}
-          <button
-            type="button"
-            onClick={handleLogin}
-            disabled={loading}
-            style={{ background: loading ? '#555' : '#22d3ee', color: '#000', border: 'none', borderRadius: '8px', padding: '14px', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', cursor: loading ? 'not-allowed' : 'pointer', width: '100%' }}
-          >
+          <button type="button" onClick={handleLogin} disabled={loading}
+            style={{ background: loading ? '#555' : '#22d3ee', color: '#000', border: 'none', borderRadius: '8px', padding: '14px', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', cursor: loading ? 'not-allowed' : 'pointer', width: '100%' }}>
             {loading ? 'CARGANDO...' : 'ENTRAR'}
           </button>
           <div style={{ textAlign: 'center', fontSize: '12px', color: '#666' }}>

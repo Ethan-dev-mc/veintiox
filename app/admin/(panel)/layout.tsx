@@ -1,25 +1,22 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import Sidebar from '@/components/admin/Sidebar'
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = cookies()
+  const token = cookieStore.get('vx-admin-token')?.value
 
-  const supabase = createServerClient(
+  if (!token) redirect('/admin/login')
+
+  const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll() },
-        setAll() {},
-      },
-    }
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user }, error } = await supabase.auth.getUser(token)
 
-  if (!session) redirect('/admin/login')
+  if (error || !user) redirect('/admin/login')
 
   return (
     <div className="flex h-screen overflow-hidden bg-vx-black">

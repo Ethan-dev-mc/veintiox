@@ -9,15 +9,13 @@ export function middleware(request: NextRequest) {
   const isPublicAdminApi = [
     '/api/admin/setup-check',
     '/api/admin/auth/login',
+    '/api/admin/auth/set-session',
+    '/api/admin/debug-cookies',
   ].includes(pathname)
 
   if (isAdminApi && !isPublicAdminApi) {
-    // Para APIs admin, verificar que existe la cookie de sesión de Supabase
-    const cookies = request.cookies.getAll()
-    const hasAuthCookie = cookies.some(
-      (c) => c.name.startsWith('sb-') && c.name.includes('-auth-token')
-    )
-    if (!hasAuthCookie) {
+    const hasToken = !!request.cookies.get('vx-admin-token')?.value
+    if (!hasToken) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
   }
