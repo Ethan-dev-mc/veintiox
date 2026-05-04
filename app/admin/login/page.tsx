@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
 import Input from '@/components/atoms/Input'
 import Button from '@/components/atoms/Button'
 
@@ -16,24 +17,22 @@ export default function AdminLoginPage() {
     setError('')
 
     try {
-      const res = await fetch('/api/admin/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ email, password }),
-      })
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
 
-      const json = await res.json()
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
-      if (!res.ok) {
-        setError(json.error ?? 'Credenciales incorrectas')
+      if (authError) {
+        setError('Credenciales incorrectas')
         setLoading(false)
         return
       }
 
       window.location.href = '/admin/dashboard'
     } catch (e: any) {
-      setError('Error de conexión: ' + (e?.message ?? 'intenta de nuevo'))
+      setError('Error: ' + (e?.message ?? 'intenta de nuevo'))
       setLoading(false)
     }
   }

@@ -33,22 +33,22 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
 
   // Setup solo accesible si NO hay sesión activa
   if (isSetupPage) {
-    if (user) return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+    if (session) return NextResponse.redirect(new URL('/admin/dashboard', request.url))
     return response
   }
 
   // Login siempre accesible
   if (isLoginPage) {
-    if (user) return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+    if (session) return NextResponse.redirect(new URL('/admin/dashboard', request.url))
     return response
   }
 
   // Todo lo demás de admin requiere sesión
-  if (!user) {
+  if (!session) {
     if (isAdminApi) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
