@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   const categoria = searchParams.get('categoria')
   const q = searchParams.get('q')
   const destacados = searchParams.get('destacados')
-  const limit = Number(searchParams.get('limit') ?? 20)
+  const limit = Math.min(Math.max(1, Number(searchParams.get('limit') ?? 20)), 100)
 
   const supabase = createSupabaseServerClient()
   let query = supabase.from('productos').select('*, categorias(*)').eq('activo', true)

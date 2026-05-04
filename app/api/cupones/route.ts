@@ -1,13 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { z } from 'zod'
+import { rateLimit, getClientIP } from '@/lib/rate-limit'
+
+const schema = z.object({
+  codigo: z.string().min(1).max(30).regex(/^[A-Z0-9_\-]+$/i),
+  subtotal: z.number().min(0).max(999999),
+})
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIP(req)
+  if (!rateLimit(`cupones:${ip}`, 10, 60_000)) {
+    return NextResponse.json({ error: 'Demasiados intentos. Espera un momento.' }, { status: 429 })
+  }
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-  const { codigo, subtotal } = await req.json()
-  if (!codigo) return NextResponse.json({ error: 'Código requerido' }, { status: 400 })
+
+  const parsed = schema.safeParse(await req.json())
+  if (!parsed.success) return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
+  const { codigo, subtotal } = parsed.data
 
   const { data: cupon, error } = await supabase
     .from('cupones')

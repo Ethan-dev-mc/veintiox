@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { rateLimit, getClientIP } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIP(req)
+  if (!rateLimit(`ai:${ip}`, 5, 60_000)) {
+    return NextResponse.json({ error: 'Demasiadas solicitudes. Espera un momento.' }, { status: 429 })
+  }
+
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-  const { nombre, categoria } = await req.json()
+  const body = await req.json()
+  const nombre = String(body.nombre ?? '').slice(0, 100).trim()
+  const categoria = String(body.categoria ?? '').slice(0, 50).trim()
   if (!nombre) return NextResponse.json({ error: 'Nombre requerido' }, { status: 400 })
 
   try {
