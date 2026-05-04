@@ -52,12 +52,14 @@ interface CheckoutFormProps {
   total: number
   onSubmit: (data: CheckoutFormData, cuponId?: string, descuento?: number) => Promise<void>
   loading?: boolean
+  apiError?: string
 }
 
-export default function CheckoutForm({ items, subtotal, envio, total, onSubmit, loading = false }: CheckoutFormProps) {
+export default function CheckoutForm({ items, subtotal, envio, total, onSubmit, loading = false, apiError }: CheckoutFormProps) {
   const { register, handleSubmit, formState: { errors } } = useForm<CheckoutFormData>({
     resolver: zodResolver(schema),
     defaultValues: { metodo_pago: 'mercadopago' },
+    shouldFocusError: true,
   })
 
   const [codigoCupon, setCodigoCupon] = useState('')
@@ -152,6 +154,11 @@ export default function CheckoutForm({ items, subtotal, envio, total, onSubmit, 
           <Select label="" options={METODOS_PAGO} error={errors.metodo_pago?.message} {...register('metodo_pago')} />
         </section>
 
+        {apiError && (
+          <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+            {apiError}
+          </div>
+        )}
         <Button type="submit" size="lg" fullWidth loading={loading}>
           Confirmar pedido — ${totalConDescuento.toFixed(2)} MXN
         </Button>
