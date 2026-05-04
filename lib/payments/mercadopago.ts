@@ -16,9 +16,9 @@ export async function createMercadoPagoPreference(pedidoId: string, total: numbe
       }],
       external_reference: pedidoId,
       back_urls: {
-        success: `${SITE_URL}/checkout/confirmacion?external_reference=${pedidoId}`,
-        failure: `${SITE_URL}/checkout/confirmacion?external_reference=${pedidoId}&status=failure`,
-        pending: `${SITE_URL}/checkout/confirmacion?external_reference=${pedidoId}&status=pending`,
+        success: `${SITE_URL}/checkout/confirmacion`,
+        failure: `${SITE_URL}/checkout/confirmacion`,
+        pending: `${SITE_URL}/checkout/confirmacion`,
       },
       auto_return: 'approved',
       notification_url: `${SITE_URL}/api/webhooks/mercadopago`,
