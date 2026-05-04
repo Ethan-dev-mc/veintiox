@@ -184,6 +184,36 @@ export default function PedidosClient({ pedidos: pedidosInit }: { pedidos: Pedid
         ))}
       </div>
 
+      {/* Limpiar incompletos */}
+      {vista === 'incompletos' && pedidosVista.length > 0 && (
+        <div className="mb-4 flex items-center justify-between bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-4 py-3">
+          <p className="text-xs text-yellow-400">{pedidosVista.length} checkout{pedidosVista.length > 1 ? 's' : ''} sin completar — el cliente llegó al checkout pero no pagó.</p>
+          <Button
+            size="sm"
+            loading={eliminando}
+            onClick={async () => {
+              if (!confirm(`¿Eliminar los ${pedidosVista.length} pedidos incompletos?`)) return
+              setEliminando(true)
+              try {
+                const ids = pedidosVista.map(p => p.id)
+                const res = await fetch('/api/admin/pedidos', {
+                  method: 'DELETE',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'same-origin',
+                  body: JSON.stringify({ ids }),
+                })
+                if (!res.ok) throw new Error('Error al eliminar')
+                setPedidos(prev => prev.filter(p => !ids.includes(p.id)))
+              } catch (e: any) { alert(e.message) }
+              finally { setEliminando(false) }
+            }}
+            className="!bg-yellow-600 hover:!bg-yellow-700 text-white ml-4 flex-shrink-0"
+          >
+            Limpiar todos
+          </Button>
+        </div>
+      )}
+
       {/* Sub-filtros por estado (solo en vista pagados) */}
       {vista === 'pagados' && (
         <div className="flex gap-2 flex-wrap mb-4">

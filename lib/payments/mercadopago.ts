@@ -13,12 +13,6 @@ export async function createMercadoPagoPreference(pedidoId: string, total: numbe
         currency_id: 'MXN',
       }],
       external_reference: pedidoId,
-      back_urls: {
-        success: 'https://veintiox.store/checkout/confirmacion',
-        failure: 'https://veintiox.store/checkout/confirmacion',
-        pending: 'https://veintiox.store/checkout/confirmacion',
-      },
-      auto_return: 'approved',
       notification_url: 'https://veintiox.store/api/webhooks/mercadopago',
       statement_descriptor: 'VEINTIOX',
     }),
