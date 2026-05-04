@@ -10,9 +10,10 @@ export async function middleware(request: NextRequest) {
   const isLoginPage = pathname === '/admin/login'
   const isSetupPage = pathname === '/admin/setup'
   const isSetupCheck = pathname === '/api/admin/setup-check'
+  const isLoginApi   = pathname === '/api/admin/auth/login'
 
   if (!isAdminRoute && !isAdminApi) return NextResponse.next()
-  if (isSetupCheck) return NextResponse.next()
+  if (isSetupCheck || isLoginApi) return NextResponse.next()
 
   // Crear cliente Supabase con cookies
   let response = NextResponse.next({ request })
@@ -22,7 +23,7 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() { return request.cookies.getAll() },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           cookiesToSet.forEach(({ name, value, options }) => {
             request.cookies.set(name, value)
             response.cookies.set(name, value, options)
