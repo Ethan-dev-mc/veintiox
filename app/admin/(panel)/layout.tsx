@@ -6,17 +6,38 @@ import Sidebar from '@/components/admin/Sidebar'
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = cookies()
   const token = cookieStore.get('vx-admin-token')?.value
+  const refreshToken = cookieStore.get('vx-admin-refresh')?.value
 
-  if (!token) redirect('/admin/login')
+  if (!token && !refreshToken) redirect('/admin/login')
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { data: { user }, error } = await supabase.auth.getUser(token)
+  let user = null
 
-  if (error || !user) redirect('/admin/login')
+  if (token) {
+    const { data, error } = await supabase.auth.getUser(token)
+    if (!error && data.user) user = data.user
+  }
+
+  // access_token expirado — renovar con refresh_token
+  if (!user && refreshToken) {
+    const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken })
+    if (!error && data.user && data.session) {
+      user = data.user
+      const maxAge = 60 * 60 * 24 * 7
+      cookieStore.set('vx-admin-token', data.session.access_token, {
+        httpOnly: true, secure: true, sameSite: 'lax', maxAge, path: '/',
+      })
+      cookieStore.set('vx-admin-refresh', data.session.refresh_token, {
+        httpOnly: true, secure: true, sameSite: 'lax', maxAge, path: '/',
+      })
+    }
+  }
+
+  if (!user) redirect('/admin/login')
 
   return (
     <div className="flex h-screen overflow-hidden bg-vx-black">
