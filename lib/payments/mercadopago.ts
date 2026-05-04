@@ -1,5 +1,3 @@
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://veintiox.store'
-
 export async function createMercadoPagoPreference(pedidoId: string, total: number) {
   const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
     method: 'POST',
@@ -16,12 +14,12 @@ export async function createMercadoPagoPreference(pedidoId: string, total: numbe
       }],
       external_reference: pedidoId,
       back_urls: {
-        success: `${SITE_URL}/checkout/confirmacion`,
-        failure: `${SITE_URL}/checkout/confirmacion`,
-        pending: `${SITE_URL}/checkout/confirmacion`,
+        success: 'https://veintiox.store/checkout/confirmacion',
+        failure: 'https://veintiox.store/checkout/confirmacion',
+        pending: 'https://veintiox.store/checkout/confirmacion',
       },
       auto_return: 'approved',
-      notification_url: `${SITE_URL}/api/webhooks/mercadopago`,
+      notification_url: 'https://veintiox.store/api/webhooks/mercadopago',
       statement_descriptor: 'VEINTIOX',
     }),
   })
