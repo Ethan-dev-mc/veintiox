@@ -9,12 +9,17 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError('Ingresa email y contraseña')
+      return
+    }
     setLoading(true)
     setError('')
+    setStatus('Conectando...')
 
     try {
       const supabase = createBrowserClient(
@@ -22,17 +27,28 @@ export default function AdminLoginPage() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
 
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      setStatus('Autenticando...')
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
       if (authError) {
-        setError('Credenciales incorrectas')
+        setError('Error: ' + authError.message)
+        setStatus('')
         setLoading(false)
         return
       }
 
+      if (!data.session) {
+        setError('No se obtuvo sesión. Intenta de nuevo.')
+        setStatus('')
+        setLoading(false)
+        return
+      }
+
+      setStatus('Redirigiendo...')
       window.location.href = '/admin/dashboard'
     } catch (e: any) {
-      setError('Error: ' + (e?.message ?? 'intenta de nuevo'))
+      setError('Excepción: ' + (e?.message ?? String(e)))
+      setStatus('')
       setLoading(false)
     }
   }
@@ -45,7 +61,7 @@ export default function AdminLoginPage() {
           <p className="text-xs text-vx-gray500 uppercase tracking-wider mt-1">Panel Admin</p>
         </div>
 
-        <form onSubmit={handleLogin} className="bg-vx-gray900 rounded-2xl p-6 flex flex-col gap-5">
+        <div className="bg-vx-gray900 rounded-2xl p-6 flex flex-col gap-5">
           <p className="font-display text-xl text-vx-white">INICIAR SESIÓN</p>
           <Input
             label="Email"
@@ -53,7 +69,6 @@ export default function AdminLoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="admin@veintiox.store"
-            required
           />
           <Input
             label="Contraseña"
@@ -61,15 +76,18 @@ export default function AdminLoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            required
+            onKeyDown={(e) => { if (e.key === 'Enter') handleLogin() }}
           />
-          {error && <p className="text-xs text-red-400">{error}</p>}
-          <Button type="submit" fullWidth loading={loading}>Entrar</Button>
+          {error && <p className="text-xs text-red-400 break-all">{error}</p>}
+          {status && !error && <p className="text-xs text-vx-cyan">{status}</p>}
+          <Button type="button" onClick={handleLogin} fullWidth loading={loading}>
+            Entrar
+          </Button>
           <p className="text-center text-xs text-vx-gray500">
             ¿Primera vez?{' '}
             <a href="/admin/setup" className="text-vx-cyan hover:underline">Crear cuenta admin</a>
           </p>
-        </form>
+        </div>
       </div>
     </div>
   )
