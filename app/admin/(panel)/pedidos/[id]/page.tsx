@@ -61,7 +61,7 @@ export default async function DetallePedidoPage({ params }: Props) {
       </div>
 
       {/* Sección CJ Dropshipping */}
-      {pedido.estado === 'pagado' && (
+      {['pagado', 'pendiente_envio'].includes(pedido.estado) && (
         <div className="mb-6">
           <CJSection
             pedido={pedido}

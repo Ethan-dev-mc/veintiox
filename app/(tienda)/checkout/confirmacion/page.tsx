@@ -9,24 +9,7 @@ interface Props {
 }
 
 export default async function ConfirmacionPage({ searchParams }: Props) {
-  // MP regresa external_reference = pedido.id (UUID)
-  // También puede venir ?pedido=numero_pedido si fue pago manual
-  let numeroPedido = searchParams.pedido ?? null
   const mpRef = searchParams.external_reference
-
-  if (!numeroPedido && mpRef) {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-    const { data } = await supabase
-      .from('pedidos')
-      .select('numero_pedido')
-      .eq('id', mpRef)
-      .single()
-    if (data) numeroPedido = data.numero_pedido
-  }
-
   const pagoCancelado = searchParams.status === 'failure' || searchParams.status === 'rejected'
 
   if (pagoCancelado) {
@@ -37,6 +20,31 @@ export default async function ConfirmacionPage({ searchParams }: Props) {
         <Link href="/carrito"><Button>Volver al carrito</Button></Link>
       </div>
     )
+  }
+
+  let numeroPedido = searchParams.pedido ?? null
+
+  if (mpRef) {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    const { data } = await supabase
+      .from('pedidos')
+      .select('numero_pedido, estado')
+      .eq('id', mpRef)
+      .single()
+
+    if (!data || !['pendiente_envio', 'enviado', 'entregado'].includes(data.estado)) {
+      return (
+        <div className="container-site py-20 flex flex-col items-center text-center gap-6">
+          <Heading size="sm" className="text-yellow-400">Pago en proceso</Heading>
+          <Text color="muted">Tu pago está siendo procesado. En unos minutos recibirás confirmación.</Text>
+          <Link href="/catalogo"><Button>Seguir comprando</Button></Link>
+        </div>
+      )
+    }
+    numeroPedido = data.numero_pedido
   }
 
   return (
@@ -52,7 +60,7 @@ export default async function ConfirmacionPage({ searchParams }: Props) {
           </p>
         )}
         <Text color="muted" className="max-w-md mx-auto">
-          Recibirás un correo con los detalles de tu pedido. Te avisamos cuando sea enviado.
+          Tu pedido fue recibido. Te avisamos cuando sea enviado.
         </Text>
       </div>
       <div className="flex gap-3">

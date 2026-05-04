@@ -6,11 +6,13 @@ function getSupabase() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
-// PATCH /api/admin/pedidos — actualizar estado de uno o varios pedidos
+// PATCH /api/admin/pedidos — actualizar estado (acepta {id} o {ids})
 export async function PATCH(req: NextRequest) {
   const supabase = getSupabase()
-  const { ids, estado } = await req.json()
-  if (!ids?.length || !estado) return NextResponse.json({ error: 'Faltan datos' }, { status: 400 })
+  const body = await req.json()
+  const { estado } = body
+  const ids: string[] = body.ids ?? (body.id ? [body.id] : [])
+  if (!ids.length || !estado) return NextResponse.json({ error: 'Faltan datos' }, { status: 400 })
 
   const { error } = await supabase.from('pedidos').update({ estado }).in('id', ids)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
