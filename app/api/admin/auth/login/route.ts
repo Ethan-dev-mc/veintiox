@@ -8,7 +8,12 @@ const schema = z.object({
 })
 
 export async function POST(req: NextRequest) {
-  const parsed = schema.safeParse(await req.json())
+  let body: unknown
+  try { body = await req.json() } catch {
+    return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })
+  }
+
+  const parsed = schema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
   }
@@ -31,9 +36,15 @@ export async function POST(req: NextRequest) {
     }
   )
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  let authError: unknown
+  try {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    authError = error
+  } catch (e) {
+    return NextResponse.json({ error: 'Error interno de autenticación' }, { status: 500 })
+  }
 
-  if (error) {
+  if (authError) {
     return NextResponse.json({ error: 'Credenciales incorrectas' }, { status: 401 })
   }
 
