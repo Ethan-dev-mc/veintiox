@@ -9,7 +9,6 @@ export default async function NuevoProductoPage() {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
   const { data: categorias, error } = await supabase.from('categorias').select('id, nombre').order('nombre')
-  console.log('[NuevoProducto] categorias:', categorias, 'error:', error)
 
   return (
     <div>
