@@ -3,6 +3,10 @@ import Anthropic from '@anthropic-ai/sdk'
 import { rateLimit, getClientIP } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
+  if (!req.cookies.get('vx-admin-token')?.value) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  }
+
   const ip = getClientIP(req)
   if (!rateLimit(`ai:${ip}`, 5, 60_000)) {
     return NextResponse.json({ error: 'Demasiadas solicitudes. Espera un momento.' }, { status: 429 })

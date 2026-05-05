@@ -17,7 +17,7 @@ export default async function DashboardPage() {
     supabase.from('productos').select('*', { count: 'exact', head: true }).eq('activo', true),
     supabase.from('pedidos').select('*', { count: 'exact', head: true }),
     supabase.from('pedidos').select('*').order('created_at', { ascending: false }).limit(5),
-    supabase.from('pedidos').select('total, estado').eq('estado', 'pagado'),
+    supabase.from('pedidos').select('total, estado').in('estado', ['pendiente_envio', 'enviado', 'entregado']),
   ])
 
   const ingresos = (pedidosStats as any[])?.reduce((acc: number, p: any) => acc + Number(p.total), 0) ?? 0
@@ -29,11 +29,11 @@ export default async function DashboardPage() {
   ]
 
   const estadoColor: Record<string, string> = {
-    pendiente:  'text-yellow-400',
-    pagado:     'text-green-400',
-    enviado:    'text-vx-cyan',
-    entregado:  'text-vx-gray300',
-    cancelado:  'text-red-400',
+    pendiente:       'text-yellow-400',
+    pendiente_envio: 'text-yellow-400',
+    enviado:         'text-vx-cyan',
+    entregado:       'text-green-400',
+    cancelado:       'text-red-400',
   }
 
   return (

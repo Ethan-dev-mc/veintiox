@@ -18,5 +18,9 @@ export async function GET() {
   const config: Record<string, string> = {}
   for (const { clave, valor } of data ?? []) config[clave] = valor
 
-  return NextResponse.json({ data: config })
+  return NextResponse.json({ data: config }, {
+    headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
+  })
 }
+
+export const revalidate = 60

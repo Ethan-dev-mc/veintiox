@@ -10,16 +10,17 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = createSupabaseServerClient()
-  const { data } = await supabase.from('productos').select('nombre, descripcion, imagenes').eq('slug', params.slug).single()
+  const { data } = await supabase.from('productos').select('nombre, descripcion, imagenes, precio').eq('slug', params.slug).single()
   if (!data) return {}
-  const p = data as Pick<Producto, 'nombre' | 'descripcion' | 'imagenes'>
+  const p = data as Pick<Producto, 'nombre' | 'descripcion' | 'imagenes' | 'precio'>
   const imagen = p.imagenes?.[0]
   return {
-    title: p.nombre,
+    title: `${p.nombre} | Veintiox`,
     description: p.descripcion?.slice(0, 160),
     openGraph: {
       title: `${p.nombre} | Veintiox`,
       description: p.descripcion?.slice(0, 160) ?? '',
+      type: 'website',
       ...(imagen ? { images: [{ url: imagen, width: 800, height: 800, alt: p.nombre }] } : {}),
     },
   }
@@ -60,5 +61,33 @@ export default async function ProductoPage({ params }: Props) {
 
   const envioGratisMinimo = configRaw ? parseFloat((configRaw as any).valor) || 999 : 999
 
-  return <ProductDetailClient producto={producto} relacionados={relacionados} envioGratisMinimo={envioGratisMinimo} />
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://veintiox.store'
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: producto.nombre,
+    description: producto.descripcion ?? '',
+    image: producto.imagenes ?? [],
+    url: `${siteUrl}/producto/${params.slug}`,
+    brand: { '@type': 'Brand', name: 'Veintiox' },
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'MXN',
+      price: producto.precio,
+      availability: producto.stock > 0
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      seller: { '@type': 'Organization', name: 'Veintiox' },
+    },
+  }
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
+      <ProductDetailClient producto={producto} relacionados={relacionados} envioGratisMinimo={envioGratisMinimo} />
+    </>
+  )
 }

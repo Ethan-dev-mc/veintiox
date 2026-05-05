@@ -12,6 +12,19 @@ import { IconArrowRight } from '@/components/atoms/Icon'
 export const metadata: Metadata = {
   title: 'Veintiox — Hoodies, Tenis y Perfumes',
   description: 'Drops limitados cada semana. Hoodies, tenis y perfumes. Kits para emprendedores. Envíos a todo México.',
+  openGraph: {
+    title: 'Veintiox — Hoodies, Tenis y Perfumes',
+    description: 'Drops limitados cada semana. Hoodies, tenis y perfumes. Kits para emprendedores. Envíos a todo México.',
+    url: 'https://veintiox.store',
+    siteName: 'Veintiox',
+    locale: 'es_MX',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Veintiox — Hoodies, Tenis y Perfumes',
+    description: 'Drops limitados. Streetwear y perfumes. Envíos a todo México.',
+  },
 }
 
 export const revalidate = 60
